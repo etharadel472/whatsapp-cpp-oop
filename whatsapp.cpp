@@ -87,7 +87,6 @@ private:
     
 public:
     Message() {
-        // TODO: Implement default constructor
         sender = "";
         content = "";
         timestamp = "";
@@ -96,7 +95,6 @@ public:
     }
     
     Message(string sndr, string cntnt) {
-        // TODO: Implement parameterized constructor
         sender = sndr;
         content = cntnt;
         status = "sent";
@@ -105,44 +103,36 @@ public:
     }
     
     string getContent() const {
-        // TODO: Implement getter
         return content;
     }
     
     string getSender() const {
-        // TODO: Implement getter
         return sender;
     }
     
     string getTimestamp() const {
-        // TODO: Implement getter
         return timestamp;
     }
     
     string getStatus() const {
-        // TODO: Implement getter
         return status;
     }
     
     Message* getReplyTo() const {
-        // TODO: Implement getter
         return replyTo;
     }
     
     void setStatus(string newStatus) {
-        // TODO: Implement setter
         if (newStatus == "sent" || newStatus == "delivered" || newStatus == "read") {
             status = newStatus;
         }
     }
     
     void setReplyTo(Message* msg) {
-        // TODO: Implement setter
         replyTo = msg;
     }
     
     void updateTimestamp() {
-        // TODO: Implement timestamp update
         time_t current_time = time(nullptr);
         char* time_string = ctime(&current_time);
         timestamp = time_string;
@@ -152,7 +142,6 @@ public:
     }
     
     void display() const {
-        // TODO: Implement message display
         if (replyTo != nullptr) {
             cout << "  -> Replying to " << replyTo->getSender() << ": \"" << replyTo->getContent() << "\"" << endl;
         }
@@ -160,7 +149,6 @@ public:
     }
     
     void addEmoji(string emojiCode) {
-        // TODO: Implement emoji support
         string emoji = "";
         if (emojiCode == ":)") {
             emoji = "😊";
