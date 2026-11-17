@@ -153,7 +153,10 @@ public:
     
     void display() const {
         // TODO: Implement message display
-
+        if (replyTo != nullptr) {
+            cout << "  -> Replying to " << replyTo->getSender() << ": \"" << replyTo->getContent() << "\"" << endl;
+        }
+        cout << "[" << timestamp << "] " << sender << ": " << content << " (" << status << ")" << endl;
     }
     
     void addEmoji(string emojiCode) {
