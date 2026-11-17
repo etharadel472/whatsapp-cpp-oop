@@ -166,12 +166,32 @@ public:
     virtual ~Chat() {}
 
     void addMessage(const Message& msg) {
-        if (messages.size() == messages.capacity()) {
-            for (int i = 0; i < static_cast<int>(messages.size()); i++) {
-                messages[i].setReplyTo(nullptr);
+        vector<int> replyIndexes(messages.size() + 1, -1);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
             }
         }
-        messages.push_back(msg);
+
+        for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+            if (msg.getReplyTo() == &messages[j]) {
+                replyIndexes[messages.size()] = j;
+                break;
+            }
+        }
+
+        Message newMessage = msg;
+        messages.push_back(newMessage);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (replyIndexes[i] != -1) {
+                messages[i].setReplyTo(&messages[replyIndexes[i]]);
+            }
+        }
     }
 
     bool deleteMessage(int index, const string& username) {
@@ -183,11 +203,34 @@ public:
             return false;
         }
 
+        vector<int> replyIndexes(messages.size(), -1);
+
         for (int i = 0; i < static_cast<int>(messages.size()); i++) {
-            messages[i].setReplyTo(nullptr);
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
+            }
         }
 
         messages.erase(messages.begin() + index);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            int oldIndex = i < index ? i : i + 1;
+            int replyIndex = replyIndexes[oldIndex];
+
+            if (replyIndex == index) {
+                messages[i].setReplyTo(nullptr);
+            }
+            else if (replyIndex != -1) {
+                if (replyIndex > index) {
+                    replyIndex--;
+                }
+                messages[i].setReplyTo(&messages[replyIndex]);
+            }
+        }
+
         return true;
     }
 
@@ -207,10 +250,30 @@ public:
 
     vector<Message> searchMessages(string keyword) const {
         vector<Message> results;
+        vector<int> originalIndexes;
 
         for (int i = 0; i < static_cast<int>(messages.size()); i++) {
             if (messages[i].getContent().find(keyword) != string::npos) {
                 results.push_back(messages[i]);
+                originalIndexes.push_back(i);
+            }
+        }
+
+        for (int i = 0; i < static_cast<int>(results.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (results[i].getReplyTo() == &messages[j]) {
+                    Message* reply = nullptr;
+
+                    for (int k = 0; k < static_cast<int>(originalIndexes.size()); k++) {
+                        if (originalIndexes[k] == j) {
+                            reply = &results[k];
+                            break;
+                        }
+                    }
+
+                    results[i].setReplyTo(reply);
+                    break;
+                }
             }
         }
 
