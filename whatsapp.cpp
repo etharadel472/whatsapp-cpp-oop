@@ -161,6 +161,31 @@ public:
     
     void addEmoji(string emojiCode) {
         // TODO: Implement emoji support
+        string emoji = "";
+        if (emojiCode == ":)") {
+            emoji = "😊";
+        }
+        else if (emojiCode == ":(") {
+            emoji = "😢";
+        }
+        else if (emojiCode == ":D") {
+            emoji = "😃";
+        }
+        else if (emojiCode == "<3") {
+            emoji = "❤️";
+        }
+        else if (emojiCode == ":thumbsup:") {
+            emoji = "👍";
+        }
+        else {
+            return;
+        }
+
+        size_t pos = 0;
+        while ((pos = content.find(emojiCode, pos)) != string::npos) {
+            content.replace(pos, emojiCode.length(), emoji);
+            pos += emoji.length();
+        }
     }
 };
 // --- END: KARIM (Message Class) ---
