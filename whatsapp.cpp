@@ -152,40 +152,93 @@ protected:
     vector<string> participants;
     vector<Message> messages;
     string chatName;
-    
+
 public:
     Chat() {
-        // TODO: Implement default constructor
+        chatName = "";
     }
-    
+
     Chat(vector<string> users, string name) {
-        // TODO: Implement parameterized constructor
+        participants = users;
+        chatName = name;
     }
-    
+
     virtual ~Chat() {}
-    
+
     void addMessage(const Message& msg) {
-        // TODO: Implement message addition
+        if (messages.size() == messages.capacity()) {
+            for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+                messages[i].setReplyTo(nullptr);
+            }
+        }
+        messages.push_back(msg);
     }
-    
+
     bool deleteMessage(int index, const string& username) {
-        // TODO: Implement message deletion
-        return false;
+        if (index < 0 || index >= static_cast<int>(messages.size())) {
+            return false;
+        }
+
+        if (messages[index].getSender() != username) {
+            return false;
+        }
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            messages[i].setReplyTo(nullptr);
+        }
+
+        messages.erase(messages.begin() + index);
+        return true;
     }
-    
+
     virtual void displayChat() const {
-        // TODO: Implement chat display
+        cout << "\n===== " << chatName << " =====\n";
+
+        if (messages.empty()) {
+            cout << "No messages yet.\n";
+            return;
+        }
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            cout << i + 1 << ". ";
+            messages[i].display();
+        }
     }
-    
+
     vector<Message> searchMessages(string keyword) const {
-        // TODO: Implement message search
-        return {};
+        vector<Message> results;
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (messages[i].getContent().find(keyword) != string::npos) {
+                results.push_back(messages[i]);
+            }
+        }
+
+        return results;
     }
-    
+
     void exportToFile(const string& filename) const {
-        // TODO: Implement export to file
+        ofstream file(filename);
+
+        if (!file.is_open()) {
+            cout << "Could not open file.\n";
+            return;
+        }
+
+        file << "Chat: " << chatName << "\n";
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            file << "[" << messages[i].getTimestamp() << "] "
+                 << messages[i].getSender() << ": "
+                 << messages[i].getContent() << " ("
+                 << messages[i].getStatus() << ")\n";
+        }
+
+        file.close();
+        cout << "Chat exported successfully.\n";
     }
 };
+
 // --- END: RAHMA (Chat Base Class) ---
 
 
