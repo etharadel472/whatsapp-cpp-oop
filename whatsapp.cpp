@@ -189,40 +189,156 @@ protected:
     vector<string> participants;
     vector<Message> messages;
     string chatName;
-    
+
 public:
     Chat() {
-        // TODO: Implement default constructor
+        chatName = "";
     }
-    
+
     Chat(vector<string> users, string name) {
-        // TODO: Implement parameterized constructor
+        participants = users;
+        chatName = name;
     }
-    
+
     virtual ~Chat() {}
-    
+
     void addMessage(const Message& msg) {
-        // TODO: Implement message addition
+        vector<int> replyIndexes(messages.size() + 1, -1);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
+            }
+        }
+
+        for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+            if (msg.getReplyTo() == &messages[j]) {
+                replyIndexes[messages.size()] = j;
+                break;
+            }
+        }
+
+        Message newMessage = msg;
+        messages.push_back(newMessage);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (replyIndexes[i] != -1) {
+                messages[i].setReplyTo(&messages[replyIndexes[i]]);
+            }
+        }
     }
-    
+
     bool deleteMessage(int index, const string& username) {
-        // TODO: Implement message deletion
-        return false;
+        if (index < 0 || index >= static_cast<int>(messages.size())) {
+            return false;
+        }
+
+        if (messages[index].getSender() != username) {
+            return false;
+        }
+
+        vector<int> replyIndexes(messages.size(), -1);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
+            }
+        }
+
+        messages.erase(messages.begin() + index);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            int oldIndex = i < index ? i : i + 1;
+            int replyIndex = replyIndexes[oldIndex];
+
+            if (replyIndex == index) {
+                messages[i].setReplyTo(nullptr);
+            }
+            else if (replyIndex != -1) {
+                if (replyIndex > index) {
+                    replyIndex--;
+                }
+                messages[i].setReplyTo(&messages[replyIndex]);
+            }
+        }
+
+        return true;
     }
-    
+
     virtual void displayChat() const {
-        // TODO: Implement chat display
+        cout << "\n===== " << chatName << " =====\n";
+
+        if (messages.empty()) {
+            cout << "No messages yet.\n";
+            return;
+        }
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            cout << i + 1 << ". ";
+            messages[i].display();
+        }
     }
-    
+
     vector<Message> searchMessages(string keyword) const {
-        // TODO: Implement message search
-        return {};
+        vector<Message> results;
+        vector<int> originalIndexes;
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (messages[i].getContent().find(keyword) != string::npos) {
+                results.push_back(messages[i]);
+                originalIndexes.push_back(i);
+            }
+        }
+
+        for (int i = 0; i < static_cast<int>(results.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (results[i].getReplyTo() == &messages[j]) {
+                    Message* reply = nullptr;
+
+                    for (int k = 0; k < static_cast<int>(originalIndexes.size()); k++) {
+                        if (originalIndexes[k] == j) {
+                            reply = &results[k];
+                            break;
+                        }
+                    }
+
+                    results[i].setReplyTo(reply);
+                    break;
+                }
+            }
+        }
+
+        return results;
     }
-    
+
     void exportToFile(const string& filename) const {
-        // TODO: Implement export to file
+        ofstream file(filename);
+
+        if (!file.is_open()) {
+            cout << "Could not open file.\n";
+            return;
+        }
+
+        file << "Chat: " << chatName << "\n";
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            file << "[" << messages[i].getTimestamp() << "] "
+                 << messages[i].getSender() << ": "
+                 << messages[i].getContent() << " ("
+                 << messages[i].getStatus() << ")\n";
+        }
+
+        file.close();
+        cout << "Chat exported successfully.\n";
     }
 };
+
 // --- END: RAHMA (Chat Base Class) ---
 
 
