@@ -87,56 +87,93 @@ private:
     
 public:
     Message() {
-        // TODO: Implement default constructor
+        sender = "";
+        content = "";
+        timestamp = "";
+        status = "";
+        replyTo = nullptr;
     }
     
     Message(string sndr, string cntnt) {
-        // TODO: Implement parameterized constructor
+        sender = sndr;
+        content = cntnt;
+        status = "sent";
+        replyTo = nullptr;
+        updateTimestamp();
     }
     
     string getContent() const {
-        // TODO: Implement getter
-        return "";
+        return content;
     }
     
     string getSender() const {
-        // TODO: Implement getter
-        return "";
+        return sender;
     }
     
     string getTimestamp() const {
-        // TODO: Implement getter
-        return "";
+        return timestamp;
     }
     
     string getStatus() const {
-        // TODO: Implement getter
-        return "";
+        return status;
     }
     
     Message* getReplyTo() const {
-        // TODO: Implement getter
-        return nullptr;
+        return replyTo;
     }
     
     void setStatus(string newStatus) {
-        // TODO: Implement setter
+        if (newStatus == "sent" || newStatus == "delivered" || newStatus == "read") {
+            status = newStatus;
+        }
     }
     
     void setReplyTo(Message* msg) {
-        // TODO: Implement setter
+        replyTo = msg;
     }
     
     void updateTimestamp() {
-        // TODO: Implement timestamp update
+        time_t current_time = time(nullptr);
+        char* time_string = ctime(&current_time);
+        timestamp = time_string;
+        if (!timestamp.empty() && timestamp.back() == '\n') {
+            timestamp.pop_back();
+        }
     }
     
     void display() const {
-        // TODO: Implement message display
+        if (replyTo != nullptr) {
+            cout << "  -> Replying to " << replyTo->getSender() << ": \"" << replyTo->getContent() << "\"" << endl;
+        }
+        cout << "[" << timestamp << "] " << sender << ": " << content << " (" << status << ")" << endl;
     }
     
     void addEmoji(string emojiCode) {
-        // TODO: Implement emoji support
+        string emoji = "";
+        if (emojiCode == ":)") {
+            emoji = "😊";
+        }
+        else if (emojiCode == ":(") {
+            emoji = "😢";
+        }
+        else if (emojiCode == ":D") {
+            emoji = "😃";
+        }
+        else if (emojiCode == "<3") {
+            emoji = "❤️";
+        }
+        else if (emojiCode == ":thumbsup:") {
+            emoji = "👍";
+        }
+        else {
+            return;
+        }
+
+        size_t pos = 0;
+        while ((pos = content.find(emojiCode, pos)) != string::npos) {
+            content.replace(pos, emojiCode.length(), emoji);
+            pos += emoji.length();
+        }
     }
 };
 // --- END: KARIM (Message Class) ---
