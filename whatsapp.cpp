@@ -20,53 +20,50 @@ private:
     string lastSeen;
 
 public:
-    User() {
-        // TODO: Implement default constructor
+    User() : status("Offline") {
+        updateLastSeen();
     }
 
-    User(string uname, string pwd, string phone) {
-        // TODO: Implement parameterized constructor
+    User(string uname, string pwd, string phone)
+        : username(uname), password(pwd), phoneNumber(phone), status("Offline") {
+        updateLastSeen();
     }
 
-    string getUsername() const {
-        // TODO: Implement getter
-        return "";
-    }
-
-    string getPhoneNumber() const {
-        // TODO: Implement getter
-        return "";
-    }
-
-    string getStatus() const {
-        // TODO: Implement getter
-        return "";
-    }
-
-    string getLastSeen() const {
-        // TODO: Implement getter
-        return "";
-    }
+    string getUsername() const { return username; }
+    string getPhoneNumber() const { return phoneNumber; }
+    string getStatus() const { return status; }
+    string getLastSeen() const { return lastSeen; }
 
     void setStatus(string newStatus) {
-        // TODO: Implement setter
+        status = newStatus;
+        updateLastSeen();
     }
 
     void setPhoneNumber(string phone) {
-        // TODO: Implement setter
+        phoneNumber = phone;
+        updateLastSeen();
     }
 
     void updateLastSeen() {
-        // TODO: Implement last seen update
+        time_t now = time(nullptr);
+        char* dt = ctime(&now);
+        if (dt != nullptr) {
+            lastSeen = dt;
+            if (!lastSeen.empty() && lastSeen.back() == '\n') {
+                lastSeen.pop_back();
+            }
+        }
     }
 
     bool checkPassword(string pwd) const {
-        // TODO: Implement password check
-        return false;
+        return password == pwd;
     }
 
-    void changePassword(string newPwd) {
-        // TODO: Implement password change
+    bool changePassword(string newPwd) {
+        if (newPwd.length() < 6) return false;
+        password = newPwd;
+        updateLastSeen();
+        return true;
     }
 };
 // --- END: MAZEN (User Class) ---
