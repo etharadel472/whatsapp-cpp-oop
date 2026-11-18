@@ -18,53 +18,53 @@ private:
     string phoneNumber;
     string status;
     string lastSeen;
-    
+
 public:
     User() {
         // TODO: Implement default constructor
     }
-    
+
     User(string uname, string pwd, string phone) {
         // TODO: Implement parameterized constructor
     }
-    
+
     string getUsername() const {
         // TODO: Implement getter
         return "";
     }
-    
+
     string getPhoneNumber() const {
         // TODO: Implement getter
         return "";
     }
-    
+
     string getStatus() const {
         // TODO: Implement getter
         return "";
     }
-    
+
     string getLastSeen() const {
         // TODO: Implement getter
         return "";
     }
-    
+
     void setStatus(string newStatus) {
         // TODO: Implement setter
     }
-    
+
     void setPhoneNumber(string phone) {
         // TODO: Implement setter
     }
-    
+
     void updateLastSeen() {
         // TODO: Implement last seen update
     }
-    
+
     bool checkPassword(string pwd) const {
         // TODO: Implement password check
         return false;
     }
-    
+
     void changePassword(string newPwd) {
         // TODO: Implement password change
     }
@@ -84,59 +84,96 @@ private:
     string timestamp;
     string status;
     Message* replyTo;
-    
+
 public:
     Message() {
-        // TODO: Implement default constructor
+        sender = "";
+        content = "";
+        timestamp = "";
+        status = "";
+        replyTo = nullptr;
     }
-    
+
     Message(string sndr, string cntnt) {
-        // TODO: Implement parameterized constructor
+        sender = sndr;
+        content = cntnt;
+        status = "sent";
+        replyTo = nullptr;
+        updateTimestamp();
     }
-    
+
     string getContent() const {
-        // TODO: Implement getter
-        return "";
+        return content;
     }
-    
+
     string getSender() const {
-        // TODO: Implement getter
-        return "";
+        return sender;
     }
-    
+
     string getTimestamp() const {
-        // TODO: Implement getter
-        return "";
+        return timestamp;
     }
-    
+
     string getStatus() const {
-        // TODO: Implement getter
-        return "";
+        return status;
     }
-    
+
     Message* getReplyTo() const {
-        // TODO: Implement getter
-        return nullptr;
+        return replyTo;
     }
-    
+
     void setStatus(string newStatus) {
-        // TODO: Implement setter
+        if (newStatus == "sent" || newStatus == "delivered" || newStatus == "read") {
+            status = newStatus;
+        }
     }
-    
+
     void setReplyTo(Message* msg) {
-        // TODO: Implement setter
+        replyTo = msg;
     }
-    
+
     void updateTimestamp() {
-        // TODO: Implement timestamp update
+        time_t current_time = time(nullptr);
+        char* time_string = ctime(&current_time);
+        timestamp = time_string;
+        if (!timestamp.empty() && timestamp.back() == '\n') {
+            timestamp.pop_back();
+        }
     }
-    
+
     void display() const {
-        // TODO: Implement message display
+        if (replyTo != nullptr) {
+            cout << "  -> Replying to " << replyTo->getSender() << ": \"" << replyTo->getContent() << "\"" << endl;
+        }
+        cout << "[" << timestamp << "] " << sender << ": " << content << " (" << status << ")" << endl;
     }
-    
+
     void addEmoji(string emojiCode) {
-        // TODO: Implement emoji support
+        string emoji = "";
+        if (emojiCode == ":)") {
+            emoji = "😊";
+        }
+        else if (emojiCode == ":(") {
+            emoji = "😢";
+        }
+        else if (emojiCode == ":D") {
+            emoji = "😃";
+        }
+        else if (emojiCode == "<3") {
+            emoji = "❤️";
+        }
+        else if (emojiCode == ":thumbsup:") {
+            emoji = "👍";
+        }
+        else {
+            return;
+        }
+
+        size_t pos = 0;
+        while ((pos = content.find(emojiCode, pos)) != string::npos) {
+            content.replace(pos, emojiCode.length(), emoji);
+            pos += emoji.length();
+        }
     }
 };
 // --- END: KARIM (Message Class) ---
@@ -152,40 +189,156 @@ protected:
     vector<string> participants;
     vector<Message> messages;
     string chatName;
-    
+
 public:
     Chat() {
-        // TODO: Implement default constructor
+        chatName = "";
     }
-    
+
     Chat(vector<string> users, string name) {
-        // TODO: Implement parameterized constructor
+        participants = users;
+        chatName = name;
     }
-    
+
     virtual ~Chat() {}
-    
+
     void addMessage(const Message& msg) {
-        // TODO: Implement message addition
+        vector<int> replyIndexes(messages.size() + 1, -1);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
+            }
+        }
+
+        for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+            if (msg.getReplyTo() == &messages[j]) {
+                replyIndexes[messages.size()] = j;
+                break;
+            }
+        }
+
+        Message newMessage = msg;
+        messages.push_back(newMessage);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (replyIndexes[i] != -1) {
+                messages[i].setReplyTo(&messages[replyIndexes[i]]);
+            }
+        }
     }
-    
+
     bool deleteMessage(int index, const string& username) {
-        // TODO: Implement message deletion
-        return false;
+        if (index < 0 || index >= static_cast<int>(messages.size())) {
+            return false;
+        }
+
+        if (messages[index].getSender() != username) {
+            return false;
+        }
+
+        vector<int> replyIndexes(messages.size(), -1);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (messages[i].getReplyTo() == &messages[j]) {
+                    replyIndexes[i] = j;
+                    break;
+                }
+            }
+        }
+
+        messages.erase(messages.begin() + index);
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            int oldIndex = i < index ? i : i + 1;
+            int replyIndex = replyIndexes[oldIndex];
+
+            if (replyIndex == index) {
+                messages[i].setReplyTo(nullptr);
+            }
+            else if (replyIndex != -1) {
+                if (replyIndex > index) {
+                    replyIndex--;
+                }
+                messages[i].setReplyTo(&messages[replyIndex]);
+            }
+        }
+
+        return true;
     }
-    
+
     virtual void displayChat() const {
-        // TODO: Implement chat display
+        cout << "\n===== " << chatName << " =====\n";
+
+        if (messages.empty()) {
+            cout << "No messages yet.\n";
+            return;
+        }
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            cout << i + 1 << ". ";
+            messages[i].display();
+        }
     }
-    
+
     vector<Message> searchMessages(string keyword) const {
-        // TODO: Implement message search
-        return {};
+        vector<Message> results;
+        vector<int> originalIndexes;
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (messages[i].getContent().find(keyword) != string::npos) {
+                results.push_back(messages[i]);
+                originalIndexes.push_back(i);
+            }
+        }
+
+        for (int i = 0; i < static_cast<int>(results.size()); i++) {
+            for (int j = 0; j < static_cast<int>(messages.size()); j++) {
+                if (results[i].getReplyTo() == &messages[j]) {
+                    Message* reply = nullptr;
+
+                    for (int k = 0; k < static_cast<int>(originalIndexes.size()); k++) {
+                        if (originalIndexes[k] == j) {
+                            reply = &results[k];
+                            break;
+                        }
+                    }
+
+                    results[i].setReplyTo(reply);
+                    break;
+                }
+            }
+        }
+
+        return results;
     }
-    
+
     void exportToFile(const string& filename) const {
-        // TODO: Implement export to file
+        ofstream file(filename);
+
+        if (!file.is_open()) {
+            cout << "Could not open file.\n";
+            return;
+        }
+
+        file << "Chat: " << chatName << "\n";
+
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            file << "[" << messages[i].getTimestamp() << "] "
+                 << messages[i].getSender() << ": "
+                 << messages[i].getContent() << " ("
+                 << messages[i].getStatus() << ")\n";
+        }
+
+        file.close();
+        cout << "Chat exported successfully.\n";
     }
 };
+
 // --- END: RAHMA (Chat Base Class) ---
 
 
@@ -198,16 +351,16 @@ class PrivateChat : public Chat {
 private:
     string user1;
     string user2;
-    
+
 public:
     PrivateChat(string u1, string u2) {
         // TODO: Implement constructor
     }
-    
+
     void displayChat() const override {
         // TODO: Implement private chat display
     }
-    
+
     void showTypingIndicator(const string& username) const {
         // TODO: Implement typing indicator
     }
@@ -224,39 +377,39 @@ class GroupChat : public Chat {
 private:
     vector<string> admins;
     string description;
-    
+
 public:
     GroupChat(vector<string> users, string name, string creator) {
         // TODO: Implement constructor
     }
-    
+
     void addAdmin(string newAdmin) {
         // TODO: Implement add admin
     }
-    
+
     bool removeParticipant(const string& admin, const string& userToRemove) {
         // TODO: Implement remove participant
         return false;
     }
-    
+
     bool isAdmin(string username) const {
         // TODO: Implement admin check
         return false;
     }
-    
+
     bool isParticipant(string username) const {
         // TODO: Implement participant check
         return false;
     }
-    
+
     void setDescription(string desc) {
         // TODO: Implement set description
     }
-    
+
     void displayChat() const override {
         // TODO: Implement group chat display
     }
-    
+
     void sendJoinRequest(const string& username) {
         // TODO: Implement join request
     }
@@ -273,41 +426,107 @@ private:
     vector<User> users;
     vector<Chat*> chats;
     int currentUserIndex;
-    
+
     // --- START: YOUSSEF [KAN-6] (Account Helper Methods) ---
     int findUserIndex(string username) const {
         // TODO: Implement user search
+        for (int i = 0; i < users.size(); i++) {
+        if (users[i].getUsername() == username) {
+            return i;
+        }
+    }
         return -1;
     }
-    
+
     bool isLoggedIn() const {
         // TODO: Implement login check
-        return false;
+           return currentUserIndex >= 0 &&
+           currentUserIndex < users.size();
     }
-    
+
     string getCurrentUsername() const {
-        // TODO: Implement get current user
+         if (!isLoggedIn()) {
         return "";
     }
+
+    return users[currentUserIndex].getUsername();
+    }
     // --- END: YOUSSEF [KAN-6] (Account Helper Methods) ---
-    
+
 public:
     WhatsApp() : currentUserIndex(-1) {}
-    
+
     // --- START: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
     void signUp() {
         // TODO: Implement user registration
+        string username, password, phone;
+
+    cout << "Enter username: ";
+    cin >> username;
+
+    if (findUserIndex(username) != -1) {
+        cout << "Username already exists!\n";
+        return;
     }
-    
+
+    cout << "Enter password: ";
+    cin >> password;
+
+    if (password.length() < 6) {
+        cout << "Password must be at least 6 characters!\n";
+        return;
+    }
+
+    cout << "Enter phone number: ";
+    cin >> phone;
+
+    users.push_back(User(username, password, phone));
+
+    cout << "Account created successfully!\n";
+    }
+
     void login() {
         // TODO: Implement user login
+          string username, password;
+
+    cout << "Enter username: ";
+    cin >> username;
+
+    int index = findUserIndex(username);
+
+    if (index == -1) {
+        cout << "User not found!\n";
+        return;
     }
-    
+
+    cout << "Enter password: ";
+    cin >> password;
+
+    if (users[index].checkPassword(password)) {
+        currentUserIndex = index;
+        cout << "Login successful!\n";
+    }
+    else {
+        cout << "Incorrect password!\n";
+    }
+    }
+
     void logout() {
         // TODO: Implement logout
+        if (!isLoggedIn()) {
+        cout << "No user is logged in!\n";
+        return;
+    }
+
+    users[currentUserIndex].updateLastSeen();
+    currentUserIndex = -1;
+
+    cout << "Logged out successfully!\n";
     }
     // --- END: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
     
+
+
     // --- START: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
 private:
     // parallel to `chats`: members and display name of each chat
