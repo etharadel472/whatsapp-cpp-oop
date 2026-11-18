@@ -373,45 +373,106 @@ public:
 // RULE: Write your code ONLY between START and END markers below.
 // =========================================================================
 // --- START: ETHAR (GroupChat Class) ---
-class GroupChat : public Chat {
+
+    class GroupChat : public Chat {
 private:
     vector<string> admins;
     string description;
 
 public:
-    GroupChat(vector<string> users, string name, string creator) {
-        // TODO: Implement constructor
+    GroupChat(vector<string> users, string name, string creator) : Chat(users, name) {
+        admins.push_back(creator);
+        if (!isParticipant(creator)) {
+            participants.push_back(creator);
+        }
+        description = "No description";
     }
 
     void addAdmin(string newAdmin) {
-        // TODO: Implement add admin
+        if (!isParticipant(newAdmin)) {
+            cout << "Error: the participant is not in this group!" << endl;
+            return;
+        }
+        if (isAdmin(newAdmin)) {
+            cout << "User is already an admin." << endl;
+            return;
+        }
+        admins.push_back(newAdmin);
+        cout << newAdmin << " is now an admin." << endl;
     }
 
     bool removeParticipant(const string& admin, const string& userToRemove) {
-        // TODO: Implement remove participant
-        return false;
+        if (!isAdmin(admin)) {
+            cout << "Error: this participant cannot do this action!" << endl;
+            return false;
+        }
+        if (!isParticipant(userToRemove)) {
+            return false;
+        }
+        
+        for (int i = 0; i < participants.size(); i++) {   
+            if (participants[i] == userToRemove) {
+                participants.erase(participants.begin() + i);
+                break;
+            }
+        }
+        
+        if (isAdmin(userToRemove)) {
+            for (int i = 0; i < admins.size(); i++) {
+                if (admins[i] == userToRemove) {
+                    admins.erase(admins.begin() + i);
+                    break;
+                }
+            }
+        }
+        
+        cout << "Command confirmed!" << endl;
+        return true;
     }
 
     bool isAdmin(string username) const {
-        // TODO: Implement admin check
+        for (int i = 0; i < admins.size(); i++) {
+            if (admins[i] == username) {
+                return true;
+            }
+        }
         return false;
     }
 
     bool isParticipant(string username) const {
-        // TODO: Implement participant check
+        for (int i = 0; i < participants.size(); i++) {
+            if (participants[i] == username) {
+                return true;
+            }
+        }
         return false;
     }
 
     void setDescription(string desc) {
-        // TODO: Implement set description
+        description = desc;
     }
 
     void displayChat() const override {
-        // TODO: Implement group chat display
+        cout << "Group Name: " << chatName << endl;
+        cout << "Description: " << description << endl;
+        
+        cout << "Participants:" << endl;
+        for (int i = 0; i < participants.size(); i++) {
+            cout << "- " << participants[i] << endl;
+        }
+        
+        cout << "Messages:" << endl;
+        for (int i = 0; i < messages.size(); i++) {
+            messages[i].display();
+        }
     }
 
     void sendJoinRequest(const string& username) {
-        // TODO: Implement join request
+        if (isParticipant(username)) {
+            cout << username << " is already a participant!" << endl;
+            return;
+        }
+        cout << "Join request sent by " << username << " to " << chatName << "." << endl;
     }
 };
 // --- END: ETHAR (GroupChat Class) ---
