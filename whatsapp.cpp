@@ -4,6 +4,9 @@
 #include <ctime>
 #include <fstream>
 #include <algorithm>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 using namespace std;
 
 // =========================================================================
@@ -149,18 +152,24 @@ public:
         string emoji = "";
         if (emojiCode == ":)") {
             emoji = "😊";
+            emoji = "\xF0\x9F\x98\x8A";
         }
         else if (emojiCode == ":(") {
             emoji = "😢";
+            emoji = "\xF0\x9F\x98\xA2";
         }
         else if (emojiCode == ":D") {
             emoji = "😃";
+            emoji = "\xF0\x9F\x98\x83";
         }
         else if (emojiCode == "<3") {
             emoji = "❤️";
+            emoji = "\xE2\x9D\xA4\xEF\xB8\x8F";
         }
         else if (emojiCode == ":thumbsup:") {
             emoji = "👍";
+            emoji = "\xF0\x9F\x91\x8D";
+            
         }
         else {
             return;
@@ -842,6 +851,27 @@ public:
         }
         if (!found) cout << "You have no chats yet.\n";
     }
+void changeUserPassword() {
+        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
+
+        string oldPwd, newPwd;
+        cout << "Enter current password: ";
+        getline(cin, oldPwd);
+
+        if (!users[currentUserIndex].checkPassword(oldPwd)) {
+            cout << "Incorrect current password!\n";
+            return;
+        }
+
+        cout << "Enter new password (min 6 chars): ";
+        getline(cin, newPwd);
+
+        if (users[currentUserIndex].changePassword(newPwd)) {
+            cout << "Password changed successfully!\n";
+        } else {
+            cout << "Password must be at least 6 characters!\n";
+        }
+    }
 
     void run() {
         while (true) {
@@ -870,7 +900,8 @@ public:
                 else if (choice == 2) createGroup();
                 else if (choice == 3) viewChats();
                 else if (choice == 4) openChat();
-                else if (choice == 5) logout();
+                else if (choice ==5) changepassword();
+                else if (choice == 6) logout();
                 else cout << "Invalid option.\n";
             }
         }
@@ -881,6 +912,9 @@ public:
 //          MAIN
 // ========================
 int main() {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+#endif
     WhatsApp whatsapp;
     whatsapp.run();
     return 0;
