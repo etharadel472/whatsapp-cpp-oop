@@ -151,25 +151,19 @@ public:
     void addEmoji(string emojiCode) {
         string emoji = "";
         if (emojiCode == ":)") {
-            emoji = "😊";
-            emoji = "\xF0\x9F\x98\x8A";
+            emoji = "\xF0\x9F\x98\x8A"; // 😊
         }
         else if (emojiCode == ":(") {
-            emoji = "😢";
-            emoji = "\xF0\x9F\x98\xA2";
+            emoji = "\xF0\x9F\x98\xA2"; // 😢
         }
         else if (emojiCode == ":D") {
-            emoji = "😃";
-            emoji = "\xF0\x9F\x98\x83";
+            emoji = "\xF0\x9F\x98\x83"; // 😃
         }
         else if (emojiCode == "<3") {
-            emoji = "❤️";
-            emoji = "\xE2\x9D\xA4\xEF\xB8\x8F";
+            emoji = "\xE2\x9D\xA4\xEF\xB8\x8F"; // ❤️
         }
         else if (emojiCode == ":thumbsup:") {
-            emoji = "👍";
-            emoji = "\xF0\x9F\x91\x8D";
-            
+            emoji = "\xF0\x9F\x91\x8D"; // 👍
         }
         else {
             return;
@@ -207,6 +201,13 @@ public:
     }
 
     virtual ~Chat() {}
+
+    Message* getMessagePtr(int index) {
+        if (index < 0 || index >= static_cast<int>(messages.size())) {
+            return nullptr;
+        }
+        return &messages[index];
+    }
 
     void addMessage(const Message& msg) {
         vector<int> replyIndexes(messages.size() + 1, -1);
@@ -344,7 +345,6 @@ public:
         cout << "Chat exported successfully.\n";
     }
 };
-
 // --- END: RAHMA (Chat Base Class) ---
 
 
@@ -383,8 +383,7 @@ public:
 // RULE: Write your code ONLY between START and END markers below.
 // =========================================================================
 // --- START: ETHAR (GroupChat Class) ---
-
-    class GroupChat : public Chat {
+class GroupChat : public Chat {
 private:
     vector<string> admins;
     string description;
@@ -420,7 +419,7 @@ public:
             return false;
         }
         
-        for (int i = 0; i < participants.size(); i++) {   
+        for (int i = 0; i < static_cast<int>(participants.size()); i++) {   
             if (participants[i] == userToRemove) {
                 participants.erase(participants.begin() + i);
                 break;
@@ -428,7 +427,7 @@ public:
         }
         
         if (isAdmin(userToRemove)) {
-            for (int i = 0; i < admins.size(); i++) {
+            for (int i = 0; i < static_cast<int>(admins.size()); i++) {
                 if (admins[i] == userToRemove) {
                     admins.erase(admins.begin() + i);
                     break;
@@ -441,7 +440,7 @@ public:
     }
 
     bool isAdmin(string username) const {
-        for (int i = 0; i < admins.size(); i++) {
+        for (int i = 0; i < static_cast<int>(admins.size()); i++) {
             if (admins[i] == username) {
                 return true;
             }
@@ -450,7 +449,7 @@ public:
     }
 
     bool isParticipant(string username) const {
-        for (int i = 0; i < participants.size(); i++) {
+        for (int i = 0; i < static_cast<int>(participants.size()); i++) {
             if (participants[i] == username) {
                 return true;
             }
@@ -463,16 +462,25 @@ public:
     }
 
     void displayChat() const override {
-        cout << "Group Name: " << chatName << endl;
+        cout << "\n===== " << chatName << " =====\n";
         cout << "Description: " << description << endl;
         
-        cout << "Participants:" << endl;
-        for (int i = 0; i < participants.size(); i++) {
-            cout << "- " << participants[i] << endl;
+        cout << "Participants (" << participants.size() << "):" << endl;
+        for (int i = 0; i < static_cast<int>(participants.size()); i++) {
+            cout << "- " << participants[i];
+            if (isAdmin(participants[i])) {
+                cout << " (Admin)";
+            }
+            cout << endl;
         }
         
         cout << "Messages:" << endl;
-        for (int i = 0; i < messages.size(); i++) {
+        if (messages.empty()) {
+            cout << "No messages yet.\n";
+            return;
+        }
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            cout << i + 1 << ". ";
             messages[i].display();
         }
     }
@@ -500,27 +508,24 @@ private:
 
     // --- START: YOUSSEF [KAN-6] (Account Helper Methods) ---
     int findUserIndex(string username) const {
-        // TODO: Implement user search
-        for (int i = 0; i < users.size(); i++) {
-        if (users[i].getUsername() == username) {
-            return i;
+        for (int i = 0; i < static_cast<int>(users.size()); i++) {
+            if (users[i].getUsername() == username) {
+                return i;
+            }
         }
-    }
         return -1;
     }
 
     bool isLoggedIn() const {
-        // TODO: Implement login check
-           return currentUserIndex >= 0 &&
-           currentUserIndex < users.size();
+        return currentUserIndex >= 0 &&
+               currentUserIndex < static_cast<int>(users.size());
     }
 
     string getCurrentUsername() const {
-         if (!isLoggedIn()) {
-        return "";
-    }
-
-    return users[currentUserIndex].getUsername();
+        if (!isLoggedIn()) {
+            return "";
+        }
+        return users[currentUserIndex].getUsername();
     }
     // --- END: YOUSSEF [KAN-6] (Account Helper Methods) ---
 
@@ -529,76 +534,72 @@ public:
 
     // --- START: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
     void signUp() {
-        // TODO: Implement user registration
         string username, password, phone;
 
-    cout << "Enter username: ";
-    cin >> username;
+        cout << "Enter username: ";
+        cin >> username;
 
-    if (findUserIndex(username) != -1) {
-        cout << "Username already exists!\n";
-        return;
-    }
+        if (findUserIndex(username) != -1) {
+            cout << "Username already exists!\n";
+            return;
+        }
 
-    cout << "Enter password: ";
-    cin >> password;
+        cout << "Enter password: ";
+        cin >> password;
 
-    if (password.length() < 6) {
-        cout << "Password must be at least 6 characters!\n";
-        return;
-    }
+        if (password.length() < 6) {
+            cout << "Password must be at least 6 characters!\n";
+            return;
+        }
 
-    cout << "Enter phone number: ";
-    cin >> phone;
+        cout << "Enter phone number: ";
+        cin >> phone;
 
-    users.push_back(User(username, password, phone));
+        users.push_back(User(username, password, phone));
 
-    cout << "Account created successfully!\n";
+        cout << "Account created successfully!\n";
     }
 
     void login() {
-        // TODO: Implement user login
-          string username, password;
+        string username, password;
 
-    cout << "Enter username: ";
-    cin >> username;
+        cout << "Enter username: ";
+        cin >> username;
 
-    int index = findUserIndex(username);
+        int index = findUserIndex(username);
 
-    if (index == -1) {
-        cout << "User not found!\n";
-        return;
-    }
+        if (index == -1) {
+            cout << "User not found!\n";
+            return;
+        }
 
-    cout << "Enter password: ";
-    cin >> password;
+        cout << "Enter password: ";
+        cin >> password;
 
-    if (users[index].checkPassword(password)) {
-        currentUserIndex = index;
-        cout << "Login successful!\n";
-    }
-    else {
-        cout << "Incorrect password!\n";
-    }
+        if (users[index].checkPassword(password)) {
+            currentUserIndex = index;
+            cout << "Login successful!\n";
+        }
+        else {
+            cout << "Incorrect password!\n";
+        }
     }
 
     void logout() {
-        // TODO: Implement logout
         if (!isLoggedIn()) {
-        cout << "No user is logged in!\n";
-        return;
-    }
+            cout << "No user is logged in!\n";
+            return;
+        }
 
-    users[currentUserIndex].updateLastSeen();
-    currentUserIndex = -1;
+        users[currentUserIndex].updateLastSeen();
+        currentUserIndex = -1;
 
-    cout << "Logged out successfully!\n";
+        cout << "Logged out successfully!\n";
     }
     // --- END: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
 
-       // --- START: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
+    // --- START: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
 private:
-    // parallel to `chats`: members and display name of each chat
     vector<vector<string> > chatMembers;
     vector<string> chatNames;
 
@@ -608,7 +609,6 @@ private:
         return false;
     }
 
-    // reads a whole line and converts it to int; false on invalid input
     bool readInt(const string& prompt, int& out) const {
         cout << prompt;
         string line;
@@ -640,12 +640,41 @@ private:
         cout << "Message sent.\n";
     }
 
+    void replyToMessage(Chat* chat, const string& me) {
+        int n;
+        if (!readInt("Message number to reply to: ", n)) {
+            cout << "Invalid number.\n";
+            return;
+        }
+        Message* target = chat->getMessagePtr(n - 1);
+        if (target == nullptr) {
+            cout << "Message not found.\n";
+            return;
+        }
+
+        PrivateChat* pc = dynamic_cast<PrivateChat*>(chat);
+        if (pc != nullptr) pc->showTypingIndicator(me);
+
+        cout << "Reply: ";
+        string content;
+        getline(cin, content);
+        if (content.empty()) { cout << "Error: message can't be empty.\n"; return; }
+
+        Message m(me, content);
+        m.setReplyTo(target);
+        const char* codes[] = { ":thumbsup:", ":)", ":(", ":D", "<3" };
+        for (size_t i = 0; i < 5; i++) m.addEmoji(codes[i]);
+
+        chat->addMessage(m);
+        users[currentUserIndex].updateLastSeen();
+        cout << "Reply sent.\n";
+    }
+
     void openChat() {
         if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
 
         string me = getCurrentUsername();
 
-        // only chats the current user is part of
         vector<size_t> mine;
         for (size_t i = 0; i < chats.size(); i++)
             if (isMemberOfChat(i, me)) mine.push_back(i);
@@ -667,10 +696,10 @@ private:
 
         while (true) {
             chat->displayChat();
-            cout << "\n1. Send message\n2. Delete my message\n3. Search messages"
-                 << "\n4. Export chat to file";
+            cout << "\n1. Send message\n2. Reply to message\n3. Delete my message"
+                 << "\n4. Search messages\n5. Export chat to file";
             if (gc != nullptr) {
-                cout << "\n5. Set group description\n6. Add admin\n7. Remove participant";
+                cout << "\n6. Set group description\n7. Add admin\n8. Remove participant";
             }
             cout << "\n0. Back\n";
 
@@ -686,17 +715,20 @@ private:
                 sendMessage(chat, me);
             }
             else if (choice == 2) {
+                replyToMessage(chat, me);
+            }
+            else if (choice == 3) {
                 int n;
                 if (!readInt("Message number to delete: ", n)) {
                     cout << "Invalid number.\n";
-                } else if (chat->deleteMessage(n - 1, me)) {   
+                } else if (chat->deleteMessage(n - 1, me)) {
                     users[currentUserIndex].updateLastSeen();
                     cout << "Message deleted.\n";
                 } else {
                     cout << "Can't delete: invalid number or not your message.\n";
                 }
             }
-            else if (choice == 3) {
+            else if (choice == 4) {
                 cout << "Keyword: ";
                 string keyword;
                 getline(cin, keyword);
@@ -710,14 +742,14 @@ private:
                     for (size_t i = 0; i < results.size(); i++) results[i].display();
                 }
             }
-            else if (choice == 4) {
+            else if (choice == 5) {
                 cout << "File name (e.g. chat.txt): ";
                 string filename;
                 getline(cin, filename);
                 if (filename.empty()) { cout << "Error: file name can't be empty.\n"; continue; }
                 chat->exportToFile(filename);
             }
-            else if (gc != nullptr && choice == 5) {
+            else if (gc != nullptr && choice == 6) {
                 if (!gc->isAdmin(me)) {
                     cout << "Error: only admins can change description.\n";
                     continue;
@@ -728,7 +760,7 @@ private:
                 gc->setDescription(desc);
                 cout << "Description updated.\n";
             }
-            else if (gc != nullptr && choice == 6) {
+            else if (gc != nullptr && choice == 7) {
                 if (!gc->isAdmin(me)) {
                     cout << "Error: only admins can add an admin.\n";
                     continue;
@@ -738,7 +770,7 @@ private:
                 getline(cin, target);
                 gc->addAdmin(target);
             }
-            else if (gc != nullptr && choice == 7) {
+            else if (gc != nullptr && choice == 8) {
                 cout << "Username to remove: ";
                 string target;
                 getline(cin, target);
@@ -782,7 +814,6 @@ public:
 
         string me = getCurrentUsername();
 
-        // don't create a duplicate private chat
         for (size_t i = 0; i < chats.size(); i++) {
             if (dynamic_cast<PrivateChat*>(chats[i]) == nullptr) continue;
             if (isMemberOfChat(i, me) && isMemberOfChat(i, other)) {
@@ -826,7 +857,6 @@ public:
             return;
         }
 
-        // GroupChat constructor adds the creator to participants and admins
         chats.push_back(new GroupChat(members, name, me));
 
         vector<string> all = members;
@@ -838,85 +868,5 @@ public:
         cout << "Group '" << name << "' created. You are the admin.\n";
     }
 
-    void viewChats() const {
-        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
-
-        string me = getCurrentUsername();
-        bool found = false;
-        for (size_t i = 0; i < chats.size(); i++) {
-            if (!isMemberOfChat(i, me)) continue;
-            found = true;
-            cout << "\n=== " << chatNames[i] << " ===\n";
-            chats[i]->displayChat();
-        }
-        if (!found) cout << "You have no chats yet.\n";
-    }
-void changeUserPassword() {
-        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
-
-        string oldPwd, newPwd;
-        cout << "Enter current password: ";
-        getline(cin, oldPwd);
-
-        if (!users[currentUserIndex].checkPassword(oldPwd)) {
-            cout << "Incorrect current password!\n";
-            return;
-        }
-
-        cout << "Enter new password (min 6 chars): ";
-        getline(cin, newPwd);
-
-        if (users[currentUserIndex].changePassword(newPwd)) {
-            cout << "Password changed successfully!\n";
-        } else {
-            cout << "Password must be at least 6 characters!\n";
-        }
-    }
-
-    void run() {
-        while (true) {
-            int choice;
-            if (!isLoggedIn())
-                cout << "\n1. Login\n2. Sign Up\n3. Exit\nChoice: ";
-            else
-                cout << "\n1. Start Private Chat\n2. Create Group\n3. View Chats\n4. Open Chat\n5. Change Password\n6. Logout\nChoice: ";
-
-            if (!(cin >> choice)) {
-                if (cin.eof()) break;
-                cin.clear();
-                cin.ignore(10000, '\n');
-                cout << "Invalid input, please enter a number.\n";
-                continue;
-            }
-            cin.ignore(10000, '\n');
-
-            if (!isLoggedIn()) {
-                if (choice == 1) login();
-                else if (choice == 2) signUp();
-                else if (choice == 3) break;
-                else cout << "Invalid option.\n";
-            } else {
-                if (choice == 1) startPrivateChat();
-                else if (choice == 2) createGroup();
-                else if (choice == 3) viewChats();
-                else if (choice == 4) openChat();
-                else if (choice == 5) changeUserPassword();
-                else if (choice == 6) logout();
-                else cout << "Invalid option.\n";
-            }
-        }
-    }
-};
-
-// ========================
-//          MAIN
-// ========================
-int main() {
-#ifdef _WIN32
-    SetConsoleOutputCP(CP_UTF8);
-#endif
-    WhatsApp whatsapp;
-    whatsapp.run();
-    return 0;
-}
-// --- END: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
+    void requestJoinGroup() {
+        if (!isLoggedIn())
