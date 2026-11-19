@@ -648,12 +648,18 @@ private:
             cout << "Invalid chat number.\n";
             return;
         }
-        Chat* chat = chats[mine[pick - 1]];
+        size_t chatIdx = mine[pick - 1];
+        Chat* chat = chats[chatIdx];
+        GroupChat* gc = dynamic_cast<GroupChat*>(chat);
 
         while (true) {
             chat->displayChat();
             cout << "\n1. Send message\n2. Delete my message\n3. Search messages"
-                 << "\n4. Export chat to file\n0. Back\n";
+                 << "\n4. Export chat to file";
+            if (gc != nullptr) {
+                cout << "\n5. Set group description\n6. Add admin\n7. Remove participant";
+            }
+            cout << "\n0. Back\n";
 
             int choice;
             if (!readInt("Choice: ", choice)) {
@@ -697,6 +703,42 @@ private:
                 getline(cin, filename);
                 if (filename.empty()) { cout << "Error: file name can't be empty.\n"; continue; }
                 chat->exportToFile(filename);
+            }
+            else if (gc != nullptr && choice == 5) {
+                if (!gc->isAdmin(me)) {
+                    cout << "Error: only admins can change description.\n";
+                    continue;
+                }
+                cout << "New description: ";
+                string desc;
+                getline(cin, desc);
+                gc->setDescription(desc);
+                cout << "Description updated.\n";
+            }
+            else if (gc != nullptr && choice == 6) {
+                if (!gc->isAdmin(me)) {
+                    cout << "Error: only admins can add an admin.\n";
+                    continue;
+                }
+                cout << "Username to make admin: ";
+                string target;
+                getline(cin, target);
+                gc->addAdmin(target);
+            }
+            else if (gc != nullptr && choice == 7) {
+                cout << "Username to remove: ";
+                string target;
+                getline(cin, target);
+                if (gc->removeParticipant(me, target)) {
+                    vector<string>& mems = chatMembers[chatIdx];
+                    for (size_t j = 0; j < mems.size(); j++) {
+                        if (mems[j] == target) {
+                            mems.erase(mems.begin() + j);
+                            break;
+                        }
+                    }
+                    if (target == me) return;
+                }
             }
             else {
                 cout << "Invalid option.\n";
