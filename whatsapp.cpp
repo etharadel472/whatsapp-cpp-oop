@@ -610,13 +610,13 @@ private:
     }
 
     void sendMessage(Chat* chat, const string& me) {
+        PrivateChat* pc = dynamic_cast<PrivateChat*>(chat);
+        if (pc != nullptr) pc->showTypingIndicator(me);
+
         cout << "Message: ";
         string content;
         getline(cin, content);
         if (content.empty()) { cout << "Error: message can't be empty.\n"; return; }
-
-        PrivateChat* pc = dynamic_cast<PrivateChat*>(chat);
-        if (pc != nullptr) pc->showTypingIndicator(me);
 
         Message m(me, content);
         const char* codes[] = { ":thumbsup:", ":)", ":(", ":D", "<3" };
