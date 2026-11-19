@@ -1,0 +1,6 @@
+bin/
+obj/
+1stproject.cbp
+1stproject.depend
+1stproject.layout
+testing.cpp
