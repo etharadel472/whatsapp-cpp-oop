@@ -6,6 +6,7 @@
 #include <algorithm>
 #ifdef _WIN32
 #include <windows.h>
+#include <conio.h>
 #endif
 using namespace std;
 
@@ -584,6 +585,35 @@ private:
         }
         return users[currentUserIndex].getUsername();
     }
+
+    string readPassword(const string& prompt) const {
+        cout << prompt;
+#ifdef _WIN32
+        string pwd;
+        int ch;
+        while ((ch = _getch()) != '\r' && ch != '\n') {
+            if (ch == 0 || ch == 224) {
+                _getch(); // ignore special/arrow keys
+                continue;
+            }
+            if (ch == '\b' || ch == 127) {
+                if (!pwd.empty()) {
+                    pwd.pop_back();
+                    cout << "\b \b";
+                }
+            } else if (ch >= 32 && ch <= 126) {
+                pwd.push_back(static_cast<char>(ch));
+                cout << '*';
+            }
+        }
+        cout << endl;
+        return pwd;
+#else
+        string pwd;
+        getline(cin >> ws, pwd);
+        return pwd;
+#endif
+    }
     // --- END: YOUSSEF [KAN-6] (Account Helper Methods) ---
 
 public:
@@ -591,7 +621,7 @@ public:
 
     // --- START: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
     void signUp() {
-        string username, password, phone;
+        string username, phone;
 
         cout << "Enter username: ";
         cin >> username;
@@ -601,8 +631,7 @@ public:
             return;
         }
 
-        cout << "Enter password: ";
-        cin >> password;
+        string password = readPassword("Enter password: ");
 
         if (password.length() < 6) {
             cout << "Password must be at least 6 characters!\n";
@@ -618,7 +647,7 @@ public:
     }
 
     void login() {
-        string username, password;
+        string username;
 
         cout << "Enter username: ";
         cin >> username;
@@ -630,8 +659,7 @@ public:
             return;
         }
 
-        cout << "Enter password: ";
-        cin >> password;
+        string password = readPassword("Enter password: ");
 
         if (users[index].checkPassword(password)) {
             currentUserIndex = index;
@@ -1019,17 +1047,14 @@ public:
     void changeUserPassword() {
         if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
 
-        string oldPwd, newPwd;
-        cout << "Enter current password: ";
-        getline(cin, oldPwd);
+        string oldPwd = readPassword("Enter current password: ");
 
         if (!users[currentUserIndex].checkPassword(oldPwd)) {
             cout << "Incorrect current password!\n";
             return;
         }
 
-        cout << "Enter new password (min 6 chars): ";
-        getline(cin, newPwd);
+        string newPwd = readPassword("Enter new password (min 6 chars): ");
 
         if (users[currentUserIndex].changePassword(newPwd)) {
             cout << "Password changed successfully!\n";
