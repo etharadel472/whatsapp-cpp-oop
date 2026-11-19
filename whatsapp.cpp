@@ -209,6 +209,22 @@ public:
         return &messages[index];
     }
 
+    void markAsDelivered(const string& receiver) {
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (messages[i].getSender() != receiver && messages[i].getStatus() == "sent") {
+                messages[i].setStatus("delivered");
+            }
+        }
+    }
+
+    void markAsRead(const string& reader) {
+        for (int i = 0; i < static_cast<int>(messages.size()); i++) {
+            if (messages[i].getSender() != reader && messages[i].getStatus() != "read") {
+                messages[i].setStatus("read");
+            }
+        }
+    }
+
     void addMessage(const Message& msg) {
         vector<int> replyIndexes(messages.size() + 1, -1);
 
@@ -387,6 +403,7 @@ class GroupChat : public Chat {
 private:
     vector<string> admins;
     string description;
+    vector<string> joinRequests;
 
 public:
     GroupChat(vector<string> users, string name, string creator) : Chat(users, name) {
@@ -490,7 +507,47 @@ public:
             cout << username << " is already a participant!" << endl;
             return;
         }
+        if (find(joinRequests.begin(), joinRequests.end(), username) != joinRequests.end()) {
+            cout << "You already sent a join request to " << chatName << "!" << endl;
+            return;
+        }
+        joinRequests.push_back(username);
         cout << "Join request sent by " << username << " to " << chatName << "." << endl;
+    }
+
+    vector<string> getJoinRequests() const {
+        return joinRequests;
+    }
+
+    bool approveJoinRequest(const string& admin, const string& username) {
+        if (!isAdmin(admin)) {
+            cout << "Error: only admins can approve requests!" << endl;
+            return false;
+        }
+        auto it = find(joinRequests.begin(), joinRequests.end(), username);
+        if (it == joinRequests.end()) {
+            return false;
+        }
+        joinRequests.erase(it);
+        if (!isParticipant(username)) {
+            participants.push_back(username);
+        }
+        cout << username << " has been approved and added to " << chatName << "!" << endl;
+        return true;
+    }
+
+    bool rejectJoinRequest(const string& admin, const string& username) {
+        if (!isAdmin(admin)) {
+            cout << "Error: only admins can reject requests!" << endl;
+            return false;
+        }
+        auto it = find(joinRequests.begin(), joinRequests.end(), username);
+        if (it == joinRequests.end()) {
+            return false;
+        }
+        joinRequests.erase(it);
+        cout << "Join request from " << username << " rejected." << endl;
+        return true;
     }
 };
 // --- END: ETHAR (GroupChat Class) ---
@@ -578,6 +635,11 @@ public:
 
         if (users[index].checkPassword(password)) {
             currentUserIndex = index;
+            for (size_t i = 0; i < chats.size(); i++) {
+                if (isMemberOfChat(i, username)) {
+                    chats[i]->markAsDelivered(username);
+                }
+            }
             cout << "Login successful!\n";
         }
         else {
@@ -695,11 +757,13 @@ private:
         GroupChat* gc = dynamic_cast<GroupChat*>(chat);
 
         while (true) {
+            chat->markAsRead(me);
             chat->displayChat();
             cout << "\n1. Send message\n2. Reply to message\n3. Delete my message"
                  << "\n4. Search messages\n5. Export chat to file";
             if (gc != nullptr) {
-                cout << "\n6. Set group description\n7. Add admin\n8. Remove participant";
+                cout << "\n6. Set group description\n7. Add admin\n8. Remove participant"
+                     << "\n9. Manage join requests (" << gc->getJoinRequests().size() << ")";
             }
             cout << "\n0. Back\n";
 
@@ -783,6 +847,43 @@ private:
                         }
                     }
                     if (target == me) return;
+                }
+            }
+            else if (gc != nullptr && choice == 9) {
+                if (!gc->isAdmin(me)) {
+                    cout << "Error: only admins can manage join requests.\n";
+                    continue;
+                }
+                vector<string> reqs = gc->getJoinRequests();
+                if (reqs.empty()) {
+                    cout << "No pending join requests.\n";
+                    continue;
+                }
+                cout << "\nPending join requests:\n";
+                for (size_t i = 0; i < reqs.size(); i++) {
+                    cout << i + 1 << ". " << reqs[i] << "\n";
+                }
+                int reqPick;
+                if (!readInt("Select request number (0 to cancel): ", reqPick) || reqPick < 0 || reqPick > static_cast<int>(reqs.size())) {
+                    cout << "Invalid number.\n";
+                    continue;
+                }
+                if (reqPick == 0) continue;
+
+                string applicant = reqs[reqPick - 1];
+                int action;
+                if (!readInt("1. Approve\n2. Reject\nChoice: ", action)) {
+                    cout << "Invalid choice.\n";
+                    continue;
+                }
+                if (action == 1) {
+                    if (gc->approveJoinRequest(me, applicant) && !isMemberOfChat(chatIdx, applicant)) {
+                        chatMembers[chatIdx].push_back(applicant);
+                    }
+                } else if (action == 2) {
+                    gc->rejectJoinRequest(me, applicant);
+                } else {
+                    cout << "Invalid option.\n";
                 }
             }
             else {
