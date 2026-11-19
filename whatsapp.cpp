@@ -869,4 +869,119 @@ public:
     }
 
     void requestJoinGroup() {
-        if (!isLoggedIn())
+        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
+
+        string me = getCurrentUsername();
+        vector<size_t> available;
+        for (size_t i = 0; i < chats.size(); i++) {
+            if (dynamic_cast<GroupChat*>(chats[i]) != nullptr && !isMemberOfChat(i, me)) {
+                available.push_back(i);
+            }
+        }
+
+        if (available.empty()) {
+            cout << "No available groups to join.\n";
+            return;
+        }
+
+        cout << "\nAvailable groups:\n";
+        for (size_t k = 0; k < available.size(); k++) {
+            cout << k + 1 << ". " << chatNames[available[k]] << "\n";
+        }
+
+        int pick;
+        if (!readInt("Select group number to request join: ", pick) || pick < 1 || pick > static_cast<int>(available.size())) {
+            cout << "Invalid group number.\n";
+            return;
+        }
+
+        GroupChat* gc = dynamic_cast<GroupChat*>(chats[available[pick - 1]]);
+        if (gc != nullptr) {
+            gc->sendJoinRequest(me);
+        }
+    }
+
+    void viewChats() const {
+        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
+
+        string me = getCurrentUsername();
+        bool found = false;
+        for (size_t i = 0; i < chats.size(); i++) {
+            if (!isMemberOfChat(i, me)) continue;
+            found = true;
+            cout << "\n=== " << chatNames[i] << " ===\n";
+            chats[i]->displayChat();
+        }
+        if (!found) cout << "You have no chats yet.\n";
+    }
+
+    void changeUserPassword() {
+        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
+
+        string oldPwd, newPwd;
+        cout << "Enter current password: ";
+        getline(cin, oldPwd);
+
+        if (!users[currentUserIndex].checkPassword(oldPwd)) {
+            cout << "Incorrect current password!\n";
+            return;
+        }
+
+        cout << "Enter new password (min 6 chars): ";
+        getline(cin, newPwd);
+
+        if (users[currentUserIndex].changePassword(newPwd)) {
+            cout << "Password changed successfully!\n";
+        } else {
+            cout << "Password must be at least 6 characters!\n";
+        }
+    }
+
+    void run() {
+        while (true) {
+            int choice;
+            if (!isLoggedIn())
+                cout << "\n1. Login\n2. Sign Up\n3. Exit\nChoice: ";
+            else
+                cout << "\n1. Start Private Chat\n2. Create Group\n3. Request to Join Group\n4. View Chats\n5. Open Chat\n6. Change Password\n7. Logout\nChoice: ";
+
+            if (!(cin >> choice)) {
+                if (cin.eof()) break;
+                cin.clear();
+                cin.ignore(10000, '\n');
+                cout << "Invalid input, please enter a number.\n";
+                continue;
+            }
+            cin.ignore(10000, '\n');
+
+            if (!isLoggedIn()) {
+                if (choice == 1) login();
+                else if (choice == 2) signUp();
+                else if (choice == 3) break;
+                else cout << "Invalid option.\n";
+            } else {
+                if (choice == 1) startPrivateChat();
+                else if (choice == 2) createGroup();
+                else if (choice == 3) requestJoinGroup();
+                else if (choice == 4) viewChats();
+                else if (choice == 5) openChat();
+                else if (choice == 6) changeUserPassword();
+                else if (choice == 7) logout();
+                else cout << "Invalid option.\n";
+            }
+        }
+    }
+};
+
+// ========================
+//          MAIN
+// ========================
+int main() {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+#endif
+    WhatsApp whatsapp;
+    whatsapp.run();
+    return 0;
+}
+// --- END: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
