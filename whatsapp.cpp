@@ -351,15 +351,19 @@ private:
 
 public:
     PrivateChat(string u1, string u2) {
-        // TODO: Implement constructor
+        user1 = u1;
+        user2 = u2;
+        participants.push_back(u1);
+        participants.push_back(u2);
+        chatName = "Chat between " + u1 + " and " + u2;
     }
 
     void displayChat() const override {
-        // TODO: Implement private chat display
+        Chat::displayChat();
     }
 
     void showTypingIndicator(const string& username) const {
-        // TODO: Implement typing indicator
+        cout << username << " is typing..." << endl;
     }
 };
 // --- END: IBRAHEEM (PrivateChat Class) ---
