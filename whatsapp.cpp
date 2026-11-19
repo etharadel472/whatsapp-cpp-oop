@@ -524,10 +524,8 @@ public:
     cout << "Logged out successfully!\n";
     }
     // --- END: YOUSSEF [KAN-6] (SignUp, Login, Logout) ---
-    
 
-
-    // --- START: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
+       // --- START: SHAHD [KAN-7] (Chats Management, Destructor & Menu) ---
 private:
     // parallel to `chats`: members and display name of each chat
     vector<vector<string> > chatMembers;
@@ -539,8 +537,117 @@ private:
         return false;
     }
 
+    // reads a whole line and converts it to int; false on invalid input
+    bool readInt(const string& prompt, int& out) const {
+        cout << prompt;
+        string line;
+        if (!getline(cin, line)) return false;
+        try {
+            size_t pos = 0;
+            out = stoi(line, &pos);
+            return pos == line.size();
+        } catch (...) {
+            return false;
+        }
+    }
+
+    void sendMessage(Chat* chat, const string& me) {
+        cout << "Message: ";
+        string content;
+        getline(cin, content);
+        if (content.empty()) { cout << "Error: message can't be empty.\n"; return; }
+
+        PrivateChat* pc = dynamic_cast<PrivateChat*>(chat);
+        if (pc != nullptr) pc->showTypingIndicator(me);
+
+        Message m(me, content);
+        const char* codes[] = { ":thumbsup:", ":)", ":(", ":D", "<3" };
+        for (size_t i = 0; i < 5; i++) m.addEmoji(codes[i]);
+
+        chat->addMessage(m);
+        users[currentUserIndex].updateLastSeen();
+        cout << "Message sent.\n";
+    }
+
+    void openChat() {
+        if (!isLoggedIn()) { cout << "Please login first.\n"; return; }
+
+        string me = getCurrentUsername();
+
+        // only chats the current user is part of
+        vector<size_t> mine;
+        for (size_t i = 0; i < chats.size(); i++)
+            if (isMemberOfChat(i, me)) mine.push_back(i);
+
+        if (mine.empty()) { cout << "You have no chats yet.\n"; return; }
+
+        cout << "\nYour chats:\n";
+        for (size_t k = 0; k < mine.size(); k++)
+            cout << k + 1 << ". " << chatNames[mine[k]] << "\n";
+
+        int pick;
+        if (!readInt("Open chat number: ", pick) || pick < 1 || pick > static_cast<int>(mine.size())) {
+            cout << "Invalid chat number.\n";
+            return;
+        }
+        Chat* chat = chats[mine[pick - 1]];
+
+        while (true) {
+            chat->displayChat();
+            cout << "\n1. Send message\n2. Delete my message\n3. Search messages"
+                 << "\n4. Export chat to file\n0. Back\n";
+
+            int choice;
+            if (!readInt("Choice: ", choice)) {
+                if (cin.eof()) return;
+                cout << "Invalid input, please enter a number.\n";
+                continue;
+            }
+
+            if (choice == 0) return;
+            else if (choice == 1) {
+                sendMessage(chat, me);
+            }
+            else if (choice == 2) {
+                int n;
+                if (!readInt("Message number to delete: ", n)) {
+                    cout << "Invalid number.\n";
+                } else if (chat->deleteMessage(n - 1, me)) {   
+                    users[currentUserIndex].updateLastSeen();
+                    cout << "Message deleted.\n";
+                } else {
+                    cout << "Can't delete: invalid number or not your message.\n";
+                }
+            }
+            else if (choice == 3) {
+                cout << "Keyword: ";
+                string keyword;
+                getline(cin, keyword);
+                if (keyword.empty()) { cout << "Error: keyword can't be empty.\n"; continue; }
+
+                vector<Message> results = chat->searchMessages(keyword);
+                if (results.empty()) {
+                    cout << "No messages found.\n";
+                } else {
+                    cout << results.size() << " message(s) found:\n";
+                    for (size_t i = 0; i < results.size(); i++) results[i].display();
+                }
+            }
+            else if (choice == 4) {
+                cout << "File name (e.g. chat.txt): ";
+                string filename;
+                getline(cin, filename);
+                if (filename.empty()) { cout << "Error: file name can't be empty.\n"; continue; }
+                chat->exportToFile(filename);
+            }
+            else {
+                cout << "Invalid option.\n";
+            }
+        }
+    }
+
 public:
-    WhatsApp(const WhatsApp&) = delete;            
+    WhatsApp(const WhatsApp&) = delete;
     WhatsApp& operator=(const WhatsApp&) = delete;
 
     ~WhatsApp() {
@@ -624,10 +731,10 @@ public:
         string me = getCurrentUsername();
         bool found = false;
         for (size_t i = 0; i < chats.size(); i++) {
-            if (!isMemberOfChat(i, me)) continue;   
+            if (!isMemberOfChat(i, me)) continue;
             found = true;
             cout << "\n=== " << chatNames[i] << " ===\n";
-            chats[i]->displayChat();              
+            chats[i]->displayChat();
         }
         if (!found) cout << "You have no chats yet.\n";
     }
@@ -638,16 +745,16 @@ public:
             if (!isLoggedIn())
                 cout << "\n1. Login\n2. Sign Up\n3. Exit\nChoice: ";
             else
-                cout << "\n1. Start Private Chat\n2. Create Group\n3. View Chats\n4. Logout\nChoice: ";
+                cout << "\n1. Start Private Chat\n2. Create Group\n3. View Chats\n4. Open Chat\n5. Logout\nChoice: ";
 
             if (!(cin >> choice)) {
-                if (cin.eof()) break;               
+                if (cin.eof()) break;
                 cin.clear();
                 cin.ignore(10000, '\n');
                 cout << "Invalid input, please enter a number.\n";
                 continue;
             }
-            cin.ignore(10000, '\n');               
+            cin.ignore(10000, '\n');
 
             if (!isLoggedIn()) {
                 if (choice == 1) login();
@@ -658,7 +765,8 @@ public:
                 if (choice == 1) startPrivateChat();
                 else if (choice == 2) createGroup();
                 else if (choice == 3) viewChats();
-                else if (choice == 4) logout();
+                else if (choice == 4) openChat();
+                else if (choice == 5) logout();
                 else cout << "Invalid option.\n";
             }
         }
