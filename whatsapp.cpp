@@ -879,7 +879,7 @@ void changeUserPassword() {
             if (!isLoggedIn())
                 cout << "\n1. Login\n2. Sign Up\n3. Exit\nChoice: ";
             else
-                cout << "\n1. Start Private Chat\n2. Create Group\n3. View Chats\n4. Open Chat\n5. Logout\nChoice: ";
+                cout << "\n1. Start Private Chat\n2. Create Group\n3. View Chats\n4. Open Chat\n5. Change Password\n6. Logout\nChoice: ";
 
             if (!(cin >> choice)) {
                 if (cin.eof()) break;
@@ -900,7 +900,7 @@ void changeUserPassword() {
                 else if (choice == 2) createGroup();
                 else if (choice == 3) viewChats();
                 else if (choice == 4) openChat();
-                else if (choice ==5) changepassword();
+                else if (choice == 5) changeUserPassword();
                 else if (choice == 6) logout();
                 else cout << "Invalid option.\n";
             }
